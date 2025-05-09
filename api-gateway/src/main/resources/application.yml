@@ -1,0 +1,146 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            exposedHeaders: "Authorization"
+            allowCredentials: true
+            maxAge: 3600
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: auth-server
+          uri: lb://auth-server
+          predicates:
+            - Path=/oauth2/**,/login/**,/authorize/**,/users/**
+          filters:
+            - RemoveRequestHeader=Cookie
+        - id: resource-service
+          uri: lb://resource-service
+          predicates:
+            - Path=/api/**
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+  security:
+    oauth2:
+      client:
+        registration:
+          gateway:
+            provider: spring
+            client-id: api-gateway
+            client-secret: gateway-secret
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: openid,read,write
+        provider:
+          spring:
+            issuer-uri: http://localhost:9000
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9000
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    preferIpAddress: true
+    instanceId: ${spring.application.name}:${random.uuid}
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+
+
+
+
+
+#server:
+#  port: 8090
+#
+#spring:
+#  application:
+#    name: api-gateway
+#  cloud:
+#    gateway:
+#      globalcors:
+#        corsConfigurations:
+#          '[/**]':
+#            allowedOrigins: "*"
+#            allowedMethods: "*"
+#            allowedHeaders: "*"
+#            exposedHeaders: "Authorization"
+#            allowCredentials: true
+#            maxAge: 3600
+#      discovery:
+#        locator:
+#          enabled: true
+#          lower-case-service-id: true
+#      routes:
+#        - id: auth-server
+#          uri: lb://auth-server
+#          predicates:
+#            - Path=/oauth2/**,/login/**,/authorize/**,/users/**
+#          filters:
+#            - RemoveRequestHeader=Cookie
+#        - id: resource-service
+#          uri: lb://resource-service
+#          predicates:
+#            - Path=/api/**
+#          filters:
+#            - TokenRelay=
+#            - RemoveRequestHeader=Cookie
+#            - name: RequestRateLimiter
+#              args:
+#                redis-rate-limiter.replenishRate: 10
+#                redis-rate-limiter.burstCapacity: 20
+#  security:
+#    oauth2:
+#      client:
+#        registration:
+#          gateway:
+#            provider: spring
+#            client-id: api-gateway
+#            client-secret: gateway-secret
+#            authorization-grant-type: authorization_code
+#            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+#            scope: openid,read,write
+#        provider:
+#          spring:
+#            issuer-uri: http://localhost:9000
+#
+#eureka:
+#  client:
+#    serviceUrl:
+#      defaultZone: http://localhost:8761/eureka/
+#    register-with-eureka: true
+#    fetch-registry: true
+#  instance:
+#    preferIpAddress: true
+#    instanceId: ${spring.application.name}:${random.uuid}
+#
+#logging:
+#  level:
+#    org.springframework.cloud.gateway: DEBUG
+#    org.springframework.security: DEBUG
+#    org.springframework.web: DEBUG

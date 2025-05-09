@@ -1,0 +1,4 @@
+com\example\resource\controller\SampleController.class
+com\example\resource\controller\ResourceController.class
+com\example\resource\ResourceServiceApplication.class
+com\example\resource\config\ResourceServerConfig.class
