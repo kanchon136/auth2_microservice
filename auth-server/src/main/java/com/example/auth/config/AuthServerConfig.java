@@ -89,6 +89,7 @@ public class AuthServerConfig {
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
                 .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+                .authorizationGrantType(AuthorizationGrantType.PASSWORD)
                 .redirectUri("http://localhost:8081/login/oauth2/code/resource-server-1")
                 .redirectUri("http://localhost:8081/authorized")
                 .scope(OidcScopes.OPENID)
@@ -110,6 +111,8 @@ public class AuthServerConfig {
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
                 .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+                .authorizationGrantType(AuthorizationGrantType.PASSWORD)
+
                 .redirectUri("http://localhost:8090/login/oauth2/code/gateway")
                 .redirectUri("http://localhost:8090/authorized")
                 .scope(OidcScopes.OPENID)
