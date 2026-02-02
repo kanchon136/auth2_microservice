@@ -1,0 +1,17 @@
+C:\Users\User\Desktop\requitement_mangemnet_system\auth\auth2_microservice\auth-server\src\main\java\com\example\auth\dto\RoleResponse.java
+C:\Users\User\Desktop\requitement_mangemnet_system\auth\auth2_microservice\auth-server\src\main\java\com\example\auth\dto\PermissionAssignmentRequest.java
+C:\Users\User\Desktop\requitement_mangemnet_system\auth\auth2_microservice\auth-server\src\main\java\com\example\auth\repository\UserRepository.java
+C:\Users\User\Desktop\requitement_mangemnet_system\auth\auth2_microservice\auth-server\src\main\java\com\example\auth\repository\RoleRepository.java
+C:\Users\User\Desktop\requitement_mangemnet_system\auth\auth2_microservice\auth-server\src\main\java\com\example\auth\dto\RoleAssignmentRequest.java
+C:\Users\User\Desktop\requitement_mangemnet_system\auth\auth2_microservice\auth-server\src\main\java\com\example\auth\service\RoleManagementService.java
+C:\Users\User\Desktop\requitement_mangemnet_system\auth\auth2_microservice\auth-server\src\main\java\com\example\auth\dto\UserResponse.java
+C:\Users\User\Desktop\requitement_mangemnet_system\auth\auth2_microservice\auth-server\src\main\java\com\example\auth\AuthServerApplication.java
+C:\Users\User\Desktop\requitement_mangemnet_system\auth\auth2_microservice\auth-server\src\main\java\com\example\auth\dto\UserCreateRequest.java
+C:\Users\User\Desktop\requitement_mangemnet_system\auth\auth2_microservice\auth-server\src\main\java\com\example\auth\controller\RoleController.java
+C:\Users\User\Desktop\requitement_mangemnet_system\auth\auth2_microservice\auth-server\src\main\java\com\example\auth\service\UserManagementService.java
+C:\Users\User\Desktop\requitement_mangemnet_system\auth\auth2_microservice\auth-server\src\main\java\com\example\auth\dto\RoleCreateRequest.java
+C:\Users\User\Desktop\requitement_mangemnet_system\auth\auth2_microservice\auth-server\src\main\java\com\example\auth\config\DataInitializer.java
+C:\Users\User\Desktop\requitement_mangemnet_system\auth\auth2_microservice\auth-server\src\main\java\com\example\auth\service\UserService.java
+C:\Users\User\Desktop\requitement_mangemnet_system\auth\auth2_microservice\auth-server\src\main\java\com\example\auth\config\AuthServerConfig.java
+C:\Users\User\Desktop\requitement_mangemnet_system\auth\auth2_microservice\auth-server\src\main\java\com\example\auth\repository\PermissionRepository.java
+C:\Users\User\Desktop\requitement_mangemnet_system\auth\auth2_microservice\auth-server\src\main\java\com\example\auth\controller\UserController.java

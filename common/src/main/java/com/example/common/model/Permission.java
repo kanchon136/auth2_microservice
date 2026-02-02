@@ -1,21 +1,24 @@
 package com.example.common.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "permissions")
-@Data
+@Table(name = "auth_permissions", indexes = {
+        @Index(name = "idx_permission_name", columnList = "name")
+})
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Permission {
+@SuperBuilder
+public class Permission extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 50)
     private String name;
 }

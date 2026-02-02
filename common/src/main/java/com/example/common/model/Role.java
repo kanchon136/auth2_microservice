@@ -1,30 +1,32 @@
 package com.example.common.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "roles")
-@Data
+@Table(name = "auth_roles")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Role {
+@SuperBuilder
+public class Role extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 50)
     private String name;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    // Production Standard: Use LAZY to avoid unnecessary data fetching
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-            name = "role_permissions",
+            name = "auth_role_permissions_mapping",
             joinColumns = @JoinColumn(name = "role_id"),
             inverseJoinColumns = @JoinColumn(name = "permission_id")
     )
