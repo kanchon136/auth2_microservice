@@ -1,0 +1,34 @@
+(অথবা আপনি চাইলে ডাটাবেসের ওই টেবিলের ডাটা ডিলিট করে প্রজেক্ট রিস্টার্ট দিতে পারেন যাতে নতুন সেটিংস নিয়ে ইনসার্ট হয়।)
+
+২. নতুন Authorization Code নিন
+ব্রাউজারে গিয়ে এই সিম্পল URL-টি ব্যবহার করুন: http://localhost:9000/oauth2/authorize?response_type=code&client_id=client&scope=openid&redirect_uri=https://oauthdebugger.com/debug
+
+৩. Postman-এ টোকেন রিকোয়েস্ট (Final Step)
+এবার Postman-এ নিচের কনফিগারেশনে রিকোয়েস্ট দিন:
+
+Method: POST
+
+URL: http://localhost:9000/oauth2/token
+
+Auth: Basic Auth (Username: client, Password: secret)
+
+Body (x-www-form-urlencoded):
+
+grant_type: authorization_code
+
+code: (নতুন পাওয়া কোডটি দিন)
+
+redirect_uri: https://oauthdebugger.com/debug
+
+
+----------------------------------CURL------------------------------
+curl --location 'http://localhost:9000/oauth2/token' \
+--header 'Content-Type: application/x-www-form-urlencoded' \
+--header 'Authorization: Basic Y2xpZW50OnNlY3JldA==' \
+--data-urlencode 'grant_type=authorization_code' \
+--data-urlencode 'code=rqvigPvaVEkQXBPWg16dcO4gtScVe3LvibJhvphCtx_yt3OoZ2qrhLD36ySU9ZX1C1gcEtSqX2WF1NyYHK0oCLdRxtzAi8OuZeJ9MeSkg1nc12jzkFl313OMrIIQLphp' \
+--data-urlencode 'redirect_uri=https://oauthdebugger.com/debug'
+
+
+-------------------------------------------------------ATHORIZATION CODE -------------
+http://localhost:9000/oauth2/authorize?response_type=code&client_id=client&scope=openid&redirect_uri=https://oauthdebugger.com/debug
