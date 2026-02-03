@@ -1,59 +1,69 @@
+
 server:
   port: 8090
 
 spring:
   application:
-    name: api-gateway
+    name: event-gateway
   cloud:
     gateway:
-      globalcors:
-        corsConfigurations:
-          '[/**]':
-            allowedOrigins: "*"
-            allowedMethods: "*"
-            allowedHeaders: "*"
-            exposedHeaders: "Authorization"
-            allowCredentials: true
-            maxAge: 3600
       discovery:
         locator:
           enabled: true
-          lower-case-service-id: true
+          lower-case-service-id: true # সার্ভিস আইডি ছোট হাতের অক্ষরেও কাজ করবে
+      default-filters:
+        - TokenRelay= # এটি অটোমেটিক টোকেন পাস করবে
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials # ডুপ্লিকেট CORS হেডার মুছবে
+        - RemoveRequestHeader=Cookie # রিসোর্স সার্ভারের সিকিউরিটির জন্য কুকি রিমুভ করবে
       routes:
-        - id: auth-server
-          uri: lb://auth-server
+        - id: event-admin-panel
+          uri: lb://EVENT-ADMIN-PANEL-MS
           predicates:
-            - Path=/oauth2/**,/login/**,/authorize/**,/users/**
+            - Path=/api/v1/admin/**
           filters:
-            - RemoveRequestHeader=Cookie
-        - id: resource-service
-          uri: lb://resource-service
-          predicates:
-            - Path=/api/**
-          filters:
-            - TokenRelay=
-            - RemoveRequestHeader=Cookie
-            - name: RequestRateLimiter
+            - name: CircuitBreaker
               args:
-                redis-rate-limiter.replenishRate: 10
-                redis-rate-limiter.burstCapacity: 20
+                name: eventAdminCB
+                fallbackUri: forward:/fallback/oneInAll
+
+        - id: event-artist-agency
+          uri: lb://EVENT-ARTIST-AGENCY-MS
+          predicates:
+            - Path=/api/v1/artistPanel/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: eventArtistCB
+                fallbackUri: forward:/fallback/oneInAll
+
+        - id: event-auth-service
+          uri: lb://AUTH-SERVICE
+          predicates:
+            - Path=/auth/api/v1/**
+
   security:
     oauth2:
       client:
         registration:
-          gateway:
-            provider: spring
+          event-gateway:
+            provider: my-auth-server
             client-id: api-gateway
             client-secret: gateway-secret
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-            scope: openid,read,write
+            scope: openid, profile, read, write
         provider:
-          spring:
+          my-auth-server:
             issuer-uri: http://localhost:9000
-      resourceserver:
-        jwt:
-          issuer-uri: http://localhost:9000
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      eventAdminCB:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
 
 eureka:
   client:
@@ -64,13 +74,6 @@ eureka:
   instance:
     preferIpAddress: true
     instanceId: ${spring.application.name}:${random.uuid}
-
-logging:
-  level:
-    org.springframework.cloud.gateway: DEBUG
-    org.springframework.security: DEBUG
-    org.springframework.web: DEBUG
-
 
 
 
@@ -128,6 +131,9 @@ logging:
 #        provider:
 #          spring:
 #            issuer-uri: http://localhost:9000
+#      resourceserver:
+#        jwt:
+#          issuer-uri: http://localhost:9000
 #
 #eureka:
 #  client:

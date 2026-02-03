@@ -65,23 +65,43 @@ public class AuthServerConfig {
                         -> resourceServer.jwt(jtw-> jtw.jwtAuthenticationConverter(jwtAuthenticationConverter())));
         return http.build();
     }
-
-
     @Bean
     @Order(2)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/login", "/oauth2/**").permitAll()
-                        .requestMatchers("/roles/**", "/users/**").authenticated() // Admin API is authenticated
+                        .requestMatchers("/roles/**", "/users/**").authenticated()
                         .anyRequest().authenticated())
                 .formLogin(Customizer.withDefaults())
-                // Stateless design might set session management to STATELESS, but formLogin
-                // implies session
-                // For AS, session management is needed for the login process.
+
+                // --- এই অংশটুকু যোগ করুন ---
+                .logout(logout -> logout
+                        .logoutSuccessUrl("http://localhost:8090/") // লগআউট শেষে গেটওয়েতে ফেরত পাঠাবে
+                        .deleteCookies("JSESSIONID")
+                        .invalidateHttpSession(true)
+                )
+                // --------------------------
+
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/oauth2/**", "/roles/**", "/users/**"));
         return http.build();
     }
+
+//    @Bean
+//    @Order(2)
+//    public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+//        http
+//                .authorizeHttpRequests(authorize -> authorize
+//                        .requestMatchers("/login", "/oauth2/**").permitAll()
+//                        .requestMatchers("/roles/**", "/users/**").authenticated() // Admin API is authenticated
+//                        .anyRequest().authenticated())
+//                .formLogin(Customizer.withDefaults())
+//                // Stateless design might set session management to STATELESS, but formLogin
+//                // implies session
+//                // For AS, session management is needed for the login process.
+//                .csrf(csrf -> csrf.ignoringRequestMatchers("/oauth2/**", "/roles/**", "/users/**"));
+//        return http.build();
+//    }
 
 
 
@@ -117,9 +137,10 @@ public class AuthServerConfig {
                     .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                     .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
                     .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-                    .redirectUri("http://localhost:8090/login/oauth2/code/gateway")
-                    .redirectUri("http://localhost:8090/authorized")
+                    .redirectUri("http://localhost:8090/login/oauth2/code/api-gateway")
+                    .postLogoutRedirectUri("http://localhost:8090/")
                     .scope(OidcScopes.OPENID)
+                    .scope(OidcScopes.PROFILE) // প্রোফাইল স্কোপ যোগ করা ভালো
                     .scope("read")
                     .scope("write")
                     .clientSettings(clientSettings())
@@ -148,7 +169,9 @@ public class AuthServerConfig {
 
     @Bean
     public ClientSettings clientSettings() {
-        return ClientSettings.builder().requireProofKey(false).build();
+        return ClientSettings.builder().requireProofKey(false) // PKCE চাইলে true করতে পারেন
+                .requireAuthorizationConsent(false) // ইউজারের কাছে প্রতিবার পারমিশন চাইবে না
+                .build();
     }
 
     @Bean

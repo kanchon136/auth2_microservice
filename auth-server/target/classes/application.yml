@@ -21,16 +21,22 @@ spring:
     init:
       mode: always
       schema-locations: classpath:oauth2-schema.sql
-
-#eureka:
-#  client:
-#    serviceUrl:
-#      defaultZone: http://localhost:8761/eureka/
-#    register-with-eureka: true
-#    fetch-registry: true
-#  instance:
-#    preferIpAddress: true
-#    instanceId: ${spring.application.name}:${random.uuid}
+#spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # নিজের ইস্যু করা টোকেন নিজেই ভেরিফাই করবে
+          issuer-uri: http://localhost:9000
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    preferIpAddress: true
+    instanceId: ${spring.application.name}:${random.uuid}
 
 logging:
   level:
