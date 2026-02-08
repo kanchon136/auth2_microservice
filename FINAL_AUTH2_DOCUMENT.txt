@@ -32,3 +32,19 @@ curl --location 'http://localhost:9000/oauth2/token' \
 
 -------------------------------------------------------ATHORIZATION CODE -------------
 http://localhost:9000/oauth2/authorize?response_type=code&client_id=client&scope=openid&redirect_uri=https://oauthdebugger.com/debug
+
+
+
+
+
+--------------------------------------send the request to the gateway -------------------
+http://localhost:8090/api/sample/user
+http://localhost:8090/roles/findAllRoles
+
+http://localhost:8090/users
+
+
+
+-------------------logout url ---------defalul method type post but check the browser then mehtod type get--------------------------
+
+http://localhost:8090/logout

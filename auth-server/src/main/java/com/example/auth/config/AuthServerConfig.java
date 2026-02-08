@@ -65,6 +65,7 @@ public class AuthServerConfig {
                         -> resourceServer.jwt(jtw-> jtw.jwtAuthenticationConverter(jwtAuthenticationConverter())));
         return http.build();
     }
+
     @Bean
     @Order(2)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -74,16 +75,18 @@ public class AuthServerConfig {
                         .requestMatchers("/roles/**", "/users/**").authenticated()
                         .anyRequest().authenticated())
                 .formLogin(Customizer.withDefaults())
-
-                // --- এই অংশটুকু যোগ করুন ---
+                // --- এই লাইনটি যোগ করুন যাতে টোকেন দিয়ে রিকোয়েস্ট এক্সেপ্ট করে ---
+                .oauth2ResourceServer(resourceServer -> resourceServer
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
+                // --------------------------------------------------------
                 .logout(logout -> logout
-                        .logoutSuccessUrl("http://localhost:8090/") // লগআউট শেষে গেটওয়েতে ফেরত পাঠাবে
+                        .logoutRequestMatcher(new org.springframework.security.web.util.matcher.AntPathRequestMatcher("/logout", "GET"))
+                        .logoutSuccessUrl("http://localhost:8090/")
                         .deleteCookies("JSESSIONID")
                         .invalidateHttpSession(true)
+                        .clearAuthentication(true)
                 )
-                // --------------------------
-
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/oauth2/**", "/roles/**", "/users/**"));
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/oauth2/**", "/roles/**", "/users/**", "/logout"));
         return http.build();
     }
 
@@ -93,15 +96,21 @@ public class AuthServerConfig {
 //        http
 //                .authorizeHttpRequests(authorize -> authorize
 //                        .requestMatchers("/login", "/oauth2/**").permitAll()
-//                        .requestMatchers("/roles/**", "/users/**").authenticated() // Admin API is authenticated
+//                        .requestMatchers("/roles/**", "/users/**").authenticated()
 //                        .anyRequest().authenticated())
 //                .formLogin(Customizer.withDefaults())
-//                // Stateless design might set session management to STATELESS, but formLogin
-//                // implies session
-//                // For AS, session management is needed for the login process.
-//                .csrf(csrf -> csrf.ignoringRequestMatchers("/oauth2/**", "/roles/**", "/users/**"));
+//                .logout(logout -> logout
+//                        // এই লাইনটি অত্যন্ত গুরুত্বপূর্ণ: GET রিকোয়েস্টে লগআউট এলাউ করা
+//                        .logoutRequestMatcher(new org.springframework.security.web.util.matcher.AntPathRequestMatcher("/logout", "GET"))
+//                        .logoutSuccessUrl("http://localhost:8090/")
+//                        .deleteCookies("JSESSIONID")
+//                        .invalidateHttpSession(true)
+//                        .clearAuthentication(true)
+//                )
+//                .csrf(csrf -> csrf.ignoringRequestMatchers("/oauth2/**", "/roles/**", "/users/**", "/logout")); // logout কে CSRF থেকে মুক্তি দিন
 //        return http.build();
 //    }
+
 
 
 

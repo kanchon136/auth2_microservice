@@ -1,0 +1,4 @@
+com\example\gateway\config\GatewaySecurityConfig.class
+com\example\gateway\controller\ErrorResponse.class
+com\example\gateway\ApiGatewayApplication.class
+com\example\gateway\controller\FallbackController.class

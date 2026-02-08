@@ -1,5 +1,6 @@
 com\example\auth\dto\UserCreateRequest.class
 com\example\auth\config\DataInitializer.class
+com\example\auth\impl\AuditorAwareImpl.class
 com\example\auth\controller\RoleController.class
 com\example\auth\service\UserService.class
 com\example\auth\dto\RoleResponse.class

@@ -10,5 +10,6 @@ public class RegistryServiceApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(RegistryServiceApplication.class, args);
+        System.out.println("Registry Service is running....!!!");
     }
 }

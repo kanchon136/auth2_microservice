@@ -14,24 +14,27 @@ import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebFluxSecurity
 public class GatewaySecurityConfig {
+
 
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http,
                                                             ReactiveClientRegistrationRepository repository) {
         http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // এই লাইনটি যোগ করুন
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/auth/api/v1/**", "/fallback/**").permitAll()
+                        // ১. এখানে ওথ২ এর ডিফল্ট পাথগুলো পারমিট করা ভালো
+                        .pathMatchers("/login/**", "/oauth2/**", "/fallback/**").permitAll()
                         .anyExchange().authenticated()
                 )
                 .oauth2Login(Customizer.withDefaults())
                 .logout(logout -> logout
-                        .logoutUrl("/logout") // ফ্রন্টএন্ড থেকে এই URL কল হবে
+                        .logoutUrl("/logout")
                         .logoutSuccessHandler(oidcLogoutSuccessHandler(repository))
                 );
         return http.build();
@@ -41,19 +44,20 @@ public class GatewaySecurityConfig {
         OidcClientInitiatedServerLogoutSuccessHandler logoutHandler =
                 new OidcClientInitiatedServerLogoutSuccessHandler(repository);
 
-        // লগআউট শেষে ইউজারকে আপনার গেটওয়ে পোর্টে (৩৩৩৩) ফিরিয়ে আনবে
+        // ২. আপনার বর্তমান পোর্ট অনুযায়ী রিডাইরেক্ট ইউআরএল
         logoutHandler.setPostLogoutRedirectUri("http://localhost:8090/");
         return logoutHandler;
     }
 
-
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("*"));
+        // ৩. যখন allowCredentials(true) করবেন, তখন allowedOrigins("*") কাজ করবে না।
+        // এখানে আপনার ফ্রন্টএন্ডের স্পেসিফিক ইউআরএল (যেমন http://localhost:3000) দিতে হবে।
+        configuration.setAllowedOriginPatterns(List.of("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setExposedHeaders(Arrays.asList("Authorization"));
+        configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
@@ -61,6 +65,49 @@ public class GatewaySecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
+
+//    @Bean
+//    public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http,
+//                                                            ReactiveClientRegistrationRepository repository) {
+//        http
+//                .csrf(ServerHttpSecurity.CsrfSpec::disable)
+//                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // এই লাইনটি যোগ করুন
+//                .authorizeExchange(exchanges -> exchanges
+//                        .pathMatchers("/auth/api/v1/**", "/fallback/**").permitAll()
+//                        .anyExchange().authenticated()
+//                )
+//                .oauth2Login(Customizer.withDefaults())
+//                .logout(logout -> logout
+//                        .logoutUrl("/logout") // ফ্রন্টএন্ড থেকে এই URL কল হবে
+//                        .logoutSuccessHandler(oidcLogoutSuccessHandler(repository))
+//                );
+//        return http.build();
+//    }
+//
+//    private ServerLogoutSuccessHandler oidcLogoutSuccessHandler(ReactiveClientRegistrationRepository repository) {
+//        OidcClientInitiatedServerLogoutSuccessHandler logoutHandler =
+//                new OidcClientInitiatedServerLogoutSuccessHandler(repository);
+//
+//        // লগআউট শেষে ইউজারকে আপনার গেটওয়ে পোর্টে (৩৩৩৩) ফিরিয়ে আনবে
+//        logoutHandler.setPostLogoutRedirectUri("http://localhost:8090/");
+//        return logoutHandler;
+//    }
+//
+//
+//    @Bean
+//    public CorsConfigurationSource corsConfigurationSource() {
+//        CorsConfiguration configuration = new CorsConfiguration();
+//        configuration.setAllowedOrigins(Arrays.asList("*"));
+//        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+//        configuration.setAllowedHeaders(Arrays.asList("*"));
+//        configuration.setExposedHeaders(Arrays.asList("Authorization"));
+//        configuration.setAllowCredentials(true);
+//        configuration.setMaxAge(3600L);
+//
+//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+//        source.registerCorsConfiguration("/**", configuration);
+//        return source;
+//    }
 
 
 }

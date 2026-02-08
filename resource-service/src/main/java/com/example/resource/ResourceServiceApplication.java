@@ -12,5 +12,6 @@ public class ResourceServiceApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(ResourceServiceApplication.class, args);
+        System.out.println("Resource service is running...!!");
     }
 }

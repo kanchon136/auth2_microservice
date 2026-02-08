@@ -1,51 +1,49 @@
-
 server:
   port: 8090
 
 spring:
   application:
-    name: event-gateway
+    name: api-gateway
   cloud:
     gateway:
       discovery:
         locator:
           enabled: true
-          lower-case-service-id: true # সার্ভিস আইডি ছোট হাতের অক্ষরেও কাজ করবে
+          lower-case-service-id: true
       default-filters:
-        - TokenRelay= # এটি অটোমেটিক টোকেন পাস করবে
-        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials # ডুপ্লিকেট CORS হেডার মুছবে
-        - RemoveRequestHeader=Cookie # রিসোর্স সার্ভারের সিকিউরিটির জন্য কুকি রিমুভ করবে
+        - TokenRelay=
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials
+        - RemoveRequestHeader=Cookie
       routes:
-        - id: event-admin-panel
-          uri: lb://EVENT-ADMIN-PANEL-MS
+        # ১. Auth Server Route
+        - id: auth-server
+          uri: lb://AUTH-SERVER
           predicates:
-            - Path=/api/v1/admin/**
+            - Path=/roles/**, /users/**, /oauth2/**, /login/**, /logout/**
           filters:
             - name: CircuitBreaker
               args:
-                name: eventAdminCB
+                name: authServerCB
                 fallbackUri: forward:/fallback/oneInAll
 
-        - id: event-artist-agency
-          uri: lb://EVENT-ARTIST-AGENCY-MS
+        # ২. Main Resource Service
+        - id: resource-service
+          uri: lb://RESOURCE-SERVICE
           predicates:
-            - Path=/api/v1/artistPanel/**
+            - Path=/api/sample/**
           filters:
+            # যদি রিসোর্স সার্ভিসের ভেতরে /api/sample পাথটি না থাকে তবে নিচের লাইনটি যোগ করুন
+            # - StripPrefix=2
             - name: CircuitBreaker
               args:
-                name: eventArtistCB
+                name: resourceServiceCB
                 fallbackUri: forward:/fallback/oneInAll
-
-        - id: event-auth-service
-          uri: lb://AUTH-SERVICE
-          predicates:
-            - Path=/auth/api/v1/**
 
   security:
     oauth2:
       client:
         registration:
-          event-gateway:
+          api-gateway:
             provider: my-auth-server
             client-id: api-gateway
             client-secret: gateway-secret
@@ -56,14 +54,20 @@ spring:
           my-auth-server:
             issuer-uri: http://localhost:9000
 
+# Resilience4j Configuration
 resilience4j:
   circuitbreaker:
     instances:
-      eventAdminCB:
-        registerHealthIndicator: true
+      authServerCB:
         slidingWindowSize: 10
         failureRateThreshold: 50
-        waitDurationInOpenState: 5s
+        waitDurationInOpenState: 10s
+        registerHealthIndicator: true
+      resourceServiceCB:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        registerHealthIndicator: true
 
 eureka:
   client:
@@ -75,78 +79,7 @@ eureka:
     preferIpAddress: true
     instanceId: ${spring.application.name}:${random.uuid}
 
-
-
-
-#server:
-#  port: 8090
-#
-#spring:
-#  application:
-#    name: api-gateway
-#  cloud:
-#    gateway:
-#      globalcors:
-#        corsConfigurations:
-#          '[/**]':
-#            allowedOrigins: "*"
-#            allowedMethods: "*"
-#            allowedHeaders: "*"
-#            exposedHeaders: "Authorization"
-#            allowCredentials: true
-#            maxAge: 3600
-#      discovery:
-#        locator:
-#          enabled: true
-#          lower-case-service-id: true
-#      routes:
-#        - id: auth-server
-#          uri: lb://auth-server
-#          predicates:
-#            - Path=/oauth2/**,/login/**,/authorize/**,/users/**
-#          filters:
-#            - RemoveRequestHeader=Cookie
-#        - id: resource-service
-#          uri: lb://resource-service
-#          predicates:
-#            - Path=/api/**
-#          filters:
-#            - TokenRelay=
-#            - RemoveRequestHeader=Cookie
-#            - name: RequestRateLimiter
-#              args:
-#                redis-rate-limiter.replenishRate: 10
-#                redis-rate-limiter.burstCapacity: 20
-#  security:
-#    oauth2:
-#      client:
-#        registration:
-#          gateway:
-#            provider: spring
-#            client-id: api-gateway
-#            client-secret: gateway-secret
-#            authorization-grant-type: authorization_code
-#            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-#            scope: openid,read,write
-#        provider:
-#          spring:
-#            issuer-uri: http://localhost:9000
-#      resourceserver:
-#        jwt:
-#          issuer-uri: http://localhost:9000
-#
-#eureka:
-#  client:
-#    serviceUrl:
-#      defaultZone: http://localhost:8761/eureka/
-#    register-with-eureka: true
-#    fetch-registry: true
-#  instance:
-#    preferIpAddress: true
-#    instanceId: ${spring.application.name}:${random.uuid}
-#
-#logging:
-#  level:
-#    org.springframework.cloud.gateway: DEBUG
-#    org.springframework.security: DEBUG
-#    org.springframework.web: DEBUG
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.security: DEBUG

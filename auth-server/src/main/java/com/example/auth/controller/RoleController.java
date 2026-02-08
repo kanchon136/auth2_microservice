@@ -31,7 +31,7 @@ public class RoleController {
         return new ResponseEntity<>(mapToRoleResponse(role), HttpStatus.CREATED);
     }
 
-    @GetMapping
+    @GetMapping("/findAllRoles")
     // ডাটা দেখার জন্য READ পারমিশন থাকলেই হবে, যে কোনো এডমিন লেভেল ইউজার এটি দেখতে পারবে
     @PreAuthorize("hasAuthority('READ') or hasRole('ADMIN')")
     public ResponseEntity<List<RoleResponse>> getAllRoles() {

@@ -24,7 +24,7 @@ spring:
 #spring:
   security:
     oauth2:
-      resourceserver:
+      resource server:
         jwt:
           # নিজের ইস্যু করা টোকেন নিজেই ভেরিফাই করবে
           issuer-uri: http://localhost:9000
