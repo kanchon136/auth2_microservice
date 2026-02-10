@@ -31,6 +31,7 @@ import org.springframework.security.oauth2.server.authorization.token.JwtEncodin
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -66,30 +67,39 @@ public class AuthServerConfig {
         return http.build();
     }
 
+    // this configuration is custom login page
     @Bean
     @Order(2)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/login", "/oauth2/**").permitAll()
+                        .requestMatchers("/login", "/css/**", "/js/**", "/oauth2/**").permitAll() // Login page r static files permit kora
                         .requestMatchers("/roles/**", "/users/**").authenticated()
-                        .anyRequest().authenticated())
-                .formLogin(Customizer.withDefaults())
-                // --- এই লাইনটি যোগ করুন যাতে টোকেন দিয়ে রিকোয়েস্ট এক্সেপ্ট করে ---
+                        .anyRequest().authenticated()
+                )
+                .formLogin(form -> form
+                        .loginPage("/login")         // Amader custom login page path
+                      //  .loginProcessingUrl("/login") // Form submit hobar path
+                        .permitAll()
+                )
                 .oauth2ResourceServer(resourceServer -> resourceServer
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
-                // --------------------------------------------------------
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                )
                 .logout(logout -> logout
-                        .logoutRequestMatcher(new org.springframework.security.web.util.matcher.AntPathRequestMatcher("/logout", "GET"))
+                        .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "GET"))
                         .logoutSuccessUrl("http://localhost:8090/")
                         .deleteCookies("JSESSIONID")
                         .invalidateHttpSession(true)
                         .clearAuthentication(true)
                 )
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/oauth2/**", "/roles/**", "/users/**", "/logout"));
+
         return http.build();
     }
 
+// commended code are the spring security default loginPage
+
+//
 //    @Bean
 //    @Order(2)
 //    public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -99,19 +109,20 @@ public class AuthServerConfig {
 //                        .requestMatchers("/roles/**", "/users/**").authenticated()
 //                        .anyRequest().authenticated())
 //                .formLogin(Customizer.withDefaults())
+//                // --- এই লাইনটি যোগ করুন যাতে টোকেন দিয়ে রিকোয়েস্ট এক্সেপ্ট করে ---
+//                .oauth2ResourceServer(resourceServer -> resourceServer
+//                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
+//                // --------------------------------------------------------
 //                .logout(logout -> logout
-//                        // এই লাইনটি অত্যন্ত গুরুত্বপূর্ণ: GET রিকোয়েস্টে লগআউট এলাউ করা
 //                        .logoutRequestMatcher(new org.springframework.security.web.util.matcher.AntPathRequestMatcher("/logout", "GET"))
 //                        .logoutSuccessUrl("http://localhost:8090/")
 //                        .deleteCookies("JSESSIONID")
 //                        .invalidateHttpSession(true)
 //                        .clearAuthentication(true)
 //                )
-//                .csrf(csrf -> csrf.ignoringRequestMatchers("/oauth2/**", "/roles/**", "/users/**", "/logout")); // logout কে CSRF থেকে মুক্তি দিন
+//                .csrf(csrf -> csrf.ignoringRequestMatchers("/oauth2/**", "/roles/**", "/users/**", "/logout"));
 //        return http.build();
 //    }
-
-
 
 
     @Bean
