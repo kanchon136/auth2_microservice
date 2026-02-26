@@ -131,7 +131,7 @@ public class AuthServerConfig {
         org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository repository =
                 new org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository(
                 jdbcTemplate);
-
+      // it is used for normal request pass without the gateway OR gateway config as a resource service
         String clientId = "client";
         if (repository.findByClientId(clientId) == null) {
             RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
@@ -148,6 +148,22 @@ public class AuthServerConfig {
             repository.save(registeredClient);
         }
 
+        // it is for service to service communication OR authentication
+        String serviceClientId = "internal-service-client";
+        if (repository.findByClientId(serviceClientId) == null) {
+            RegisteredClient serviceClient = RegisteredClient.withId(UUID.randomUUID().toString())
+                    .clientId(serviceClientId)
+                    .clientSecret(passwordEncoder.encode("internal-secret")) // আপনার সিক্রেট
+                    .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                    .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS) // শুধুমাত্র ক্লায়েন্ট ক্রেডেনশিয়াল
+                    .scope("internal:read")
+                    .scope("internal:write")
+                    .clientSettings(clientSettings())
+                    .build();
+            repository.save(serviceClient);
+        }
+
+       // it is for when request pass the gateway and gateway using as auth2 client(gateway maintain the full login makanisom)
         String gatewayClientId = "api-gateway";
         if (repository.findByClientId(gatewayClientId) == null) {
             RegisteredClient gatewayClient = RegisteredClient.withId(UUID.randomUUID().toString())
@@ -170,6 +186,7 @@ public class AuthServerConfig {
 
         return repository;
     }
+
 
     @Bean
     public org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService authorizationService(
@@ -204,16 +221,46 @@ public class AuthServerConfig {
         return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
     }
 
+//    @Bean
+//    public OAuth2TokenCustomizer<JwtEncodingContext> jwtTokenCustomizer() {
+//        return (context) -> {
+//            if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
+//                Authentication principal = context.getPrincipal();
+//                Set<String> authorities = principal.getAuthorities().stream()
+//                        .map(GrantedAuthority::getAuthority)
+//                        .collect(Collectors.toSet());
+//                log.info("authorities=====>" + authorities);
+//                // Use 'authorities' as the standard claim name for Spring Resource Server
+//                context.getClaims().claim("authorities", authorities);
+//            }
+//        };
+//    }
+
+
     @Bean
     public OAuth2TokenCustomizer<JwtEncodingContext> jwtTokenCustomizer() {
         return (context) -> {
             if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
                 Authentication principal = context.getPrincipal();
-                Set<String> authorities = principal.getAuthorities().stream()
-                        .map(GrantedAuthority::getAuthority)
-                        .collect(Collectors.toSet());
-                log.info("authorities=====>" + authorities);
-                // Use 'authorities' as the standard claim name for Spring Resource Server
+
+                Set<String> authorities;
+
+                // যদি এটি সার্ভিস-টু-সার্ভিস (Client Credentials) কল হয়
+                if (context.getAuthorizationGrantType().equals(AuthorizationGrantType.CLIENT_CREDENTIALS)) {
+                    // ক্লায়েন্টকে দেওয়া স্কোপগুলোকেই (internal:read ইত্যাদি) অথরিটি হিসেবে সেট করছি
+                    authorities = context.getAuthorizedScopes().stream()
+                            .map(scope -> "SCOPE_" + scope) // রিসোর্স সার্ভার সহজে চেনার জন্য SCOPE_ যোগ করা ভালো
+                            .collect(Collectors.toSet());
+                } else {
+                    // এটি ইউজার লগইন (Authorization Code) এর জন্য
+                    authorities = principal.getAuthorities().stream()
+                            .map(GrantedAuthority::getAuthority)
+                            .collect(Collectors.toSet());
+                }
+
+                log.info("Final authorities for token =====> " + authorities);
+
+                // টোকেনে 'authorities' ক্লেইম সেট করা হচ্ছে
                 context.getClaims().claim("authorities", authorities);
             }
         };
@@ -245,6 +292,14 @@ public class AuthServerConfig {
         return keyPair;
     }
 
+
+    /**
+     * [সবশেষ বিন - JwtAuthenticationConverter]
+     * এটি তখন কাজে লাগে যখন আপনার অথ সার্ভার নিজেও একটি "Resource Server" হিসেবে কাজ করে।
+     * * কাজ: যখন আপনি টোকেন দিয়ে অথ সার্ভারের কোনো সিকিউর এপিআই (যেমন: /users বা /roles) কল করবেন,
+     * তখন এটি টোকেন থেকে 'authorities' ক্লেইমটি খুঁজে বের করে এবং স্প্রিং সিকিউরিটির চেনার উপযোগী
+     * Authorities-এ রূপান্তর করে। এর ফলে আপনি কন্ট্রোলারে @PreAuthorize ব্যবহার করতে পারেন।
+     */
     @Bean
     public org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter jwtAuthenticationConverter() {
         org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter authoritiesConverter =

@@ -48,3 +48,43 @@ http://localhost:8090/users
 -------------------logout url ---------defalul method type post but check the browser then mehtod type get--------------------------
 
 http://localhost:8090/logout
+
+
+
+------------------------------------Role of service to service call( get token) -------------------------
+curl --location 'http://localhost:9000/oauth2/token' \
+--header 'Content-Type: application/x-www-form-urlencoded' \
+--header 'Authorization: Basic aW50ZXJuYWwtc2VydmljZS1jbGllbnQ6aW50ZXJuYWwtc2VjcmV0' \
+--data-urlencode 'grant_type=client_credentials' \
+--data-urlencode 'scope=internal:read'
+
+
+
+-- get data when call service to service call by token-----------------
+curl --location 'http://localhost:8081/api/internal/data' \
+--header 'Authorization: Bearer eyJraWQiOiJhMjEwYWUwYS0yZjBlLTQzNTktOGNiOC0yMWU4NDBkYWYyZmIiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJpbnRlcm5hbC1zZXJ2aWNlLWNsaWVudCIsImF1ZCI6ImludGVybmFsLXNlcnZpY2UtY2xpZW50IiwibmJmIjoxNzcxMjM0OTMyLCJzY29wZSI6WyJpbnRlcm5hbDpyZWFkIl0sImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTAwMCIsImV4cCI6MTc3MTIzNTIzMiwiaWF0IjoxNzcxMjM0OTMyLCJqdGkiOiI2OGVhYTk5ZS0zNmQwLTRiNDgtYTRlNS1lYWM4YzMxNWFjNzQiLCJhdXRob3JpdGllcyI6WyJTQ09QRV9pbnRlcm5hbDpyZWFkIl19.dJLtte5gpaizOlWITsZbU_DGsARY17HpQgoVBSL2GJ25XHlw6gjVWGussENYavHebigPZNdPr_ybVQVjXZn-_ewxG-HJSnZAT0OVOKD21Ft_U17dW9hpnmJFGNyuxkyhPTVwdd8Y96Y81sfRBfyYqYGWbA-MVoI_oyEOpUgEhRSLRORJ8-ai2pQIBplQccQYD2hqOUWdPZLPE2nwnPUyZjET8GbWoXZCHXtHhV04vf8xk3lUgsfqz91j4-9LSvrWlVeDEK7TdMsdX7nSt-ildh28dGjJurY3i-HQU_9w61wdpTp1h4TaJomxk4k7NBKbygSPFIYopZz7HwT4hKXuTw'
+
+
+
+
+
+
+
+---------------------role of gate way request by auth 2 client ----------------------------
+১. গেটওয়েতে রিকোয়েস্ট আসা (The Entry)ইউজার যখন ব্রাউজারে http://localhost:8090/api/resource লিখে হিট করে, গেটওয়ে প্রথমে চেক করে এই পাথটি (Path) তার সিকিউরিটি কনফিগারেশনে Permit All করা আছে কি না। যেহেতু এটি পারমিট করা নেই, গেটওয়ে দেখে ইউজারের কাছে কোনো Session Cookie (SESSION id) আছে কি না।
+
+২. অথেন্টিকেশন চেক (Authentication Check)ইউজার যদি আগে লগইন না করে থাকে, তবে গেটওয়ে দেখে তার কাছে কোনো ভ্যালিড টোকেন নেই। তখন গেটওয়ে তার OAuth2 Login Filter সচল করে এবং ইউজারকে সরাসরি ডেটা না দিয়ে Redirect করার সিদ্ধান্ত নেয়।
+
+৩. লগইন পেজে পাঠানোর ধাপসমূহ (The Redirect Chain)এই ধাপটিই সবচেয়ে গুরুত্বপূর্ণ:Authorization Request: গেটওয়ে একটি Authorization Request তৈরি করে এবং ইউজারকে রিডাইরেক্ট করে অথ সার্ভারের এই ইউআরএল-এ:http://localhost:9000/oauth2/authorize?response_type=code&client_id=api-gateway&scope=openid...Auth Server Validation: অথ সার্ভার (Port 9000) রিকোয়েস্টটি পায়। সে দেখে ইউজারের কোনো সেশন (JSESSIONID) সেখানে আছে কি না।
+Login Page Generation: যেহেতু সেশন নেই, অথ সার্ভার ইউজারকে তার নিজের তৈরি করা Custom Login Page (HTML) রিটার্ন করে।
+
+
+৪. লগইন এবং কোড এক্সচেঞ্জ (Login & Callback)ইউজার ইউজারনেম/পাসওয়ার্ড দিয়ে লগইন বাটন ক্লিক করে।অথ সার্ভার সেটি ভেরিফাই করে এবং গেটওয়েকে একটি Authorization Code পাঠায় (রিডাইরেক্টের মাধ্যমে)।গেটওয়ে সেই কোডটি নিয়ে ব্যাকগ্রাউন্ডে (ইউজার দেখতে পায় না) অথ সার্ভারের কাছে যায় এবং বলে, "এই নাও কোড, এখন আমাকে এই ইউজারের Access Token এবং Refresh Token দাও।"
+
+৫. সেশন তৈরি এবং রিসোর্স কল (Final Step)অথ সার্ভার গেটওয়েকে টোকেন দিয়ে দেয়।গেটওয়ে সেই টোকেনগুলো তার নিজের Session Cache-এ সেভ করে রাখে এবং ব্রাউজারকে একটি SESSION কুকি দিয়ে দেয়।এখন গেটওয়ে আসল রিকোয়েস্টটি (/api/resource) রিসোর্স সার্ভারে পাঠায় এবং সাথে হেডারে টোকেনটি যোগ করে দেয়: Authorization: Bearer <token>.সংক্ষেপে পুরো লাইফসাইকেল:ধাপঅ্যাকশনকে করছে?১ইউআরএল হিটইউজার (Browser)
+২সেশন/টোকেন চেকগেটওয়ে (Gateway)
+৩রিডাইরেক্ট টু অথ সার্ভারগেটওয়ে
+৪লগইন পেজ দেখানোঅথ সার্ভার (Auth Server)
+৫টোকেন এক্সচেঞ্জগেটওয়ে + অথ সার্ভার
+৬ডাটা ডেলিভারিরিসোর্স সার্ভিস (Resource Service)একটি মজার বিষয়:গেটওয়ে কিন্তু প্রতিবার রিসোর্স সার্ভারকে কল করার সময় নতুন করে লগইন চেক করে না। সে তার নিজের কাছে থাকা সেশন কুকি দিয়ে ইউজারকে চিনে রাখে এবং ওই ইউজারের জন্য আগে থেকে সেভ করা টোকেনটি ব্যবহার করে।আপনি কি এই লাইফসাইকেলটি কোডের মাধ্যমে টেস্ট করতে চান? যেমন—লগইন করার পর ব্রাউজারের কুকি ডিলিট করে দিলে কী হয়, তা দেখতে চান? 
+এভাবে প্রাকটিক্যালি দেখলে আপনার কনসেপ্ট আরও পরিষ্কার হবে।

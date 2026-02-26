@@ -66,47 +66,7 @@ public class GatewaySecurityConfig {
         return source;
     }
 
-//    @Bean
-//    public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http,
-//                                                            ReactiveClientRegistrationRepository repository) {
-//        http
-//                .csrf(ServerHttpSecurity.CsrfSpec::disable)
-//                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // এই লাইনটি যোগ করুন
-//                .authorizeExchange(exchanges -> exchanges
-//                        .pathMatchers("/auth/api/v1/**", "/fallback/**").permitAll()
-//                        .anyExchange().authenticated()
-//                )
-//                .oauth2Login(Customizer.withDefaults())
-//                .logout(logout -> logout
-//                        .logoutUrl("/logout") // ফ্রন্টএন্ড থেকে এই URL কল হবে
-//                        .logoutSuccessHandler(oidcLogoutSuccessHandler(repository))
-//                );
-//        return http.build();
-//    }
 //
-//    private ServerLogoutSuccessHandler oidcLogoutSuccessHandler(ReactiveClientRegistrationRepository repository) {
-//        OidcClientInitiatedServerLogoutSuccessHandler logoutHandler =
-//                new OidcClientInitiatedServerLogoutSuccessHandler(repository);
-//
-//        // লগআউট শেষে ইউজারকে আপনার গেটওয়ে পোর্টে (৩৩৩৩) ফিরিয়ে আনবে
-//        logoutHandler.setPostLogoutRedirectUri("http://localhost:8090/");
-//        return logoutHandler;
-//    }
-//
-//
-//    @Bean
-//    public CorsConfigurationSource corsConfigurationSource() {
-//        CorsConfiguration configuration = new CorsConfiguration();
-//        configuration.setAllowedOrigins(Arrays.asList("*"));
-//        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-//        configuration.setAllowedHeaders(Arrays.asList("*"));
-//        configuration.setExposedHeaders(Arrays.asList("Authorization"));
-//        configuration.setAllowCredentials(true);
-//        configuration.setMaxAge(3600L);
-//
-//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-//        source.registerCorsConfiguration("/**", configuration);
-//        return source;
 //    }
 
 

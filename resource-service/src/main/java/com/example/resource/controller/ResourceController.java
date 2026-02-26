@@ -45,4 +45,11 @@ public class ResourceController {
         response.put("roles", jwt.getClaimAsStringList("roles"));
         return response;
     }
+
+    //check for internal service to service communication
+    @PreAuthorize("hasAuthority('SCOPE_internal:read')")
+    @GetMapping("/internal/data")
+    public String getInternalData() {
+        return "This is secure service-to-service data";
+    }
 }
